@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_vandad/providers/counter_provider.dart';
+import 'package:riverpod_vandad/providers/weather_provider.dart';
 
 void main() {
   runApp(
@@ -35,37 +36,49 @@ class MyHomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var time = ref.watch(currentDate);
+    var currentWeather = ref.watch(weatherProvider);
     return Scaffold(
-      appBar: AppBar(),
-      body: Padding(
-        padding: const EdgeInsets.all(18.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Consumer(
-                builder: (context, ref, child) {
-                  final count = ref.watch(counterProvider);
-                  final text =
-                      count == null ? 'Press the Button' : count.toString();
-                  return Text(
-                    text,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  );
-                },
+      appBar: AppBar(
+        title: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Weather'),
+          ],
+        ),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            currentWeather.when(
+              data: (data) {
+                return Text(
+                  data!,
+                  style: const TextStyle(fontSize: 40),
+                );
+              },
+              error: (error, stackTrace) => Text('Not Found!!'),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(8),
+                child: CircularProgressIndicator(),
               ),
-              const SizedBox(
-                height: 35,
-              ),
-              ElevatedButton.icon(
-                  onPressed: () {
-                    ref.read(counterProvider.notifier).increment();
+            ),
+            Expanded(
+                child: ListView.builder(
+              itemCount: City.values.length,
+              itemBuilder: (context, index) {
+                final city = City.values[index];
+                final isSelected = city == ref.watch(currentCityProvider);
+                return ListTile(
+                  title: Text(city.toString()),
+                  trailing: isSelected ? Icon(Icons.check) : null,
+                  onTap: () {
+                    ref.read(currentCityProvider.notifier).state = city;
                   },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Increment')),
-            ],
-          ),
+                );
+              },
+            ))
+          ],
         ),
       ),
     );
